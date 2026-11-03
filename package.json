@@ -1,0 +1,16 @@
+{
+  "name": "springdoc-openapi-static-release-tooling",
+  "private": true,
+  "description": "Dev-only Node deps used by the release pipeline (semantic-release + commitlint). The build itself is Maven.",
+  "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.0",
+    "@semantic-release/release-notes-generator": "^14.0.0",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "semantic-release": "^24.2.0"
+  }
+}

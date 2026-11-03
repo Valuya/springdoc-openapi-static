@@ -5,7 +5,7 @@
   <parent>
     <groupId>io.github.valuya</groupId>
     <artifactId>springdoc-openapi-static-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.0.0-SNAPSHOT</version>
   </parent>
   <artifactId>springdoc-openapi-static</artifactId>
   <name>springdoc-openapi-static</name>
