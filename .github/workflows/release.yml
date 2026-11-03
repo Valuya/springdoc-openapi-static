@@ -1,0 +1,113 @@
+name: release
+
+on:
+  push:
+    branches: [main]
+  # Manual lever for when GitHub drops the push event of a merge: run on
+  # main to release whatever landed since the last tag.
+  workflow_dispatch:
+
+# Queue runs per ref instead of racing: back-to-back merges to main
+# otherwise start parallel release jobs, and the older one fails its
+# CHANGELOG push (non-fast-forward) when a newer merge lands first.
+# Never cancel — a release run must finish.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  # On every push to main, semantic-release decides from the commits
+  # whether there's a release to cut, commits the CHANGELOG, tags vX.Y.Z
+  # and creates the GitHub release. The poms keep 0.0.0-SNAPSHOT: the
+  # version only exists in the tag, and the publish job stamps it.
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.semrel.outputs.new_release_version }}
+      published: ${{ steps.semrel.outputs.new_release_published }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install release tooling
+        run: npm ci
+
+      - name: Configure git for the release commit
+        run: |
+          git config user.name  "springdoc-openapi-static-bot"
+          git config user.email "ci@noreply.github.com"
+
+      - name: Run semantic-release
+        id: semrel
+        uses: cycjimmy/semantic-release-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Its own job, after the tag, so a failed upload is retried with "Re-run
+  # failed jobs" alone: re-running semantic-release would find the tag and
+  # release nothing.
+  maven-central:
+    if: needs.release.outputs.published == 'true'
+    needs: [release]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.release.outputs.version }}
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "25"
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+
+      # A version on Central can never be uploaded again, so a re-run after
+      # the upload went through has nothing left to do.
+      - name: Check whether the version is already on Maven Central
+        id: central
+        run: |
+          POM_URL="https://repo1.maven.org/maven2/io/github/valuya/springdoc-openapi-static-maven-plugin/${VERSION}/springdoc-openapi-static-maven-plugin-${VERSION}.pom"
+          if curl -sfI "$POM_URL" >/dev/null; then
+            echo "::notice::${VERSION} is already on Maven Central"
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stamp the version
+        if: steps.central.outputs.present == 'false'
+        run: mvn -B -q versions:set -DnewVersion="$VERSION" -DgenerateBackupPoms=false
+
+      # waitUntil=published: a green job means the artifacts resolve, not
+      # just that the Portal accepted an upload.
+      - name: Build, test, sign and publish
+        if: steps.central.outputs.present == 'false'
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: mvn -B deploy -Prelease -Dcentral.autoPublish=true -Dcentral.waitUntil=published

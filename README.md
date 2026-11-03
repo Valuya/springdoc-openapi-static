@@ -32,7 +32,7 @@ change produces no diff.
 <plugin>
   <groupId>io.github.valuya</groupId>
   <artifactId>springdoc-openapi-static-maven-plugin</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1</version>
   <configuration>
     <basePackages>
       <basePackage>com.example.api</basePackage>

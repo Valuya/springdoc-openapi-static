@@ -5,10 +5,12 @@
 
   <groupId>io.github.valuya</groupId>
   <artifactId>springdoc-openapi-static-parent</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <!-- Released versions exist only in the git tags: semantic-release picks the number from the commits, and the
+       release workflow stamps it with versions:set before publishing. -->
+  <version>0.0.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>springdoc-openapi-static</name>
+  <name>springdoc-openapi-static parent</name>
   <description>Generates a springdoc OpenAPI specification at build time, from the controllers alone: no database, no
     server, no services</description>
   <url>https://github.com/Valuya/springdoc-openapi-static</url>
@@ -52,7 +54,7 @@
     <jspecify.version>1.0.0</jspecify.version>
     <maven.version>3.9.12</maven.version>
     <maven-plugin-tools.version>3.15.2</maven-plugin-tools.version>
-    <!-- false stages the deployment for a release by hand in the Central Portal -->
+    <!-- false stages a by-hand deployment for release in the Central Portal; the release workflow publishes at once -->
     <central.autoPublish>false</central.autoPublish>
     <central.waitUntil>validated</central.waitUntil>
   </properties>
