@@ -1,0 +1,6 @@
+server:
+  servlet:
+    context-path: /greeting-api
+spring:
+  datasource:
+    url: jdbc:mariadb://nowhere.invalid:3306/greeting

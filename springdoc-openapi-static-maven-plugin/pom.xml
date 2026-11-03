@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>io.github.valuya</groupId>
+    <artifactId>springdoc-openapi-static-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+  </parent>
+  <artifactId>springdoc-openapi-static-maven-plugin</artifactId>
+  <packaging>maven-plugin</packaging>
+  <name>springdoc-openapi-static Maven plugin</name>
+  <description>Writes a springdoc OpenAPI specification on every build, from the compiled controllers: no database, no
+    server, no tests</description>
+
+  <prerequisites>
+    <maven>3.9.0</maven>
+  </prerequisites>
+
+  <dependencies>
+    <!-- Its provided Spring dependencies stay out of the plugin's classpath: the forked JVM gets the application's -->
+    <dependency>
+      <groupId>io.github.valuya</groupId>
+      <artifactId>springdoc-openapi-static</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-plugin-api</artifactId>
+      <version>${maven.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven</groupId>
+      <artifactId>maven-core</artifactId>
+      <version>${maven.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.resolver</groupId>
+      <artifactId>maven-resolver-api</artifactId>
+      <version>1.9.25</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugin-tools</groupId>
+      <artifactId>maven-plugin-annotations</artifactId>
+      <version>${maven-plugin-tools.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.inject</groupId>
+      <artifactId>javax.inject</artifactId>
+      <version>1</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-plugin-plugin</artifactId>
+        <configuration>
+          <goalPrefix>springdoc-openapi-static</goalPrefix>
+        </configuration>
+      </plugin>
+      <!-- Builds the sample projects under src/it with the plugin just built, then checks what they wrote -->
+      <plugin>
+        <artifactId>maven-invoker-plugin</artifactId>
+        <configuration>
+          <cloneProjectsTo>${project.build.directory}/it</cloneProjectsTo>
+          <postBuildHookScript>verify</postBuildHookScript>
+          <goals>
+            <goal>process-classes</goal>
+          </goals>
+          <properties>
+            <spring-boot.version>${spring-boot.version}</spring-boot.version>
+            <springdoc.version>${springdoc.version}</springdoc.version>
+          </properties>
+          <streamLogsOnFailures>true</streamLogsOnFailures>
+        </configuration>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>install</goal>
+              <goal>run</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
