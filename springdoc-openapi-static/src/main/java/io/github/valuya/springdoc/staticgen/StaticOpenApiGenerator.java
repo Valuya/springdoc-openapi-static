@@ -49,6 +49,14 @@ public final class StaticOpenApiGenerator {
         "org.springframework.boot.data.autoconfigure.web."
     );
 
+    /**
+     * A build log needs the generator's errors, not the application's startup: overridable with {@link Builder#property}.
+     */
+    private static final Map<String, Object> DEFAULT_PROPERTIES = Map.of(
+        "logging.level.root", "WARN",
+        "logging.level.org.springdoc.core.events.SpringDocAppInitializer", "ERROR"
+    );
+
     private static final String CONTEXT_PATH_PROPERTY = "server.servlet.context-path";
     private static final String API_DOCS_PATH_PROPERTY = "springdoc.api-docs.path";
     private static final String DEFAULT_API_DOCS_PATH = "/v3/api-docs";
@@ -79,7 +87,8 @@ public final class StaticOpenApiGenerator {
         Map<String, Object> overridingProperties = new LinkedHashMap<>(properties);
         String autoConfigurationPrefixList = String.join(",", autoConfigurationPrefixes);
         overridingProperties.put(StaticAutoConfigurationImportSelector.AUTO_CONFIGURATIONS_PROPERTY, autoConfigurationPrefixList);
-        StaticGenerationContextInitializer contextInitializer = new StaticGenerationContextInitializer(basePackages, includedClasses, overridingProperties);
+        StaticGenerationContextInitializer contextInitializer = new StaticGenerationContextInitializer(basePackages, includedClasses);
+        OverridingPropertySourceListener overridingPropertySourceListener = new OverridingPropertySourceListener(overridingProperties);
 
         SpringApplication springApplication = new SpringApplication(StaticGenerationConfiguration.class);
         springApplication.setWebApplicationType(WebApplicationType.SERVLET);
@@ -91,6 +100,7 @@ public final class StaticOpenApiGenerator {
         String[] profileArray = profiles.toArray(String[]::new);
         springApplication.setAdditionalProfiles(profileArray);
         springApplication.addInitializers(contextInitializer);
+        springApplication.addListeners(overridingPropertySourceListener);
 
         try (ConfigurableApplicationContext applicationContext = springApplication.run()) {
             String specification = readSpecification((WebApplicationContext) applicationContext, applicationContext.getEnvironment());
@@ -137,7 +147,7 @@ public final class StaticOpenApiGenerator {
         private final List<String> basePackages = new ArrayList<>();
         private final List<Class<?>> includedClasses = new ArrayList<>();
         private final List<String> profiles = new ArrayList<>();
-        private final Map<String, Object> properties = new LinkedHashMap<>();
+        private final Map<String, Object> properties = new LinkedHashMap<>(DEFAULT_PROPERTIES);
         private final List<String> autoConfigurationPrefixes = new ArrayList<>(DEFAULT_AUTO_CONFIGURATION_PREFIXES);
         private boolean removeServers = true;
         private boolean sortKeys = true;

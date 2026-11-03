@@ -6,15 +6,12 @@ import org.springframework.context.ApplicationContextInitializer;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.MapPropertySource;
-import org.springframework.core.env.MutablePropertySources;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.mock.web.MockServletContext;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * Fills the generation context with what springdoc reads: the controllers and their advice found in the base
@@ -23,16 +20,12 @@ import java.util.Map;
  */
 class StaticGenerationContextInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
 
-    private static final String PROPERTY_SOURCE_NAME = "springdoc-static";
-
     private final List<String> basePackages;
     private final List<Class<?>> includedClasses;
-    private final Map<String, Object> overridingProperties;
 
-    StaticGenerationContextInitializer(List<String> basePackages, List<Class<?>> includedClasses, Map<String, Object> overridingProperties) {
+    StaticGenerationContextInitializer(List<String> basePackages, List<Class<?>> includedClasses) {
         this.basePackages = basePackages;
         this.includedClasses = includedClasses;
-        this.overridingProperties = overridingProperties;
     }
 
     @Override
@@ -46,10 +39,6 @@ class StaticGenerationContextInitializer implements ApplicationContextInitialize
         beanFactory.setAutowireCandidateResolver(autowireCandidateResolver);
 
         ConfigurableEnvironment environment = webApplicationContext.getEnvironment();
-        MutablePropertySources propertySources = environment.getPropertySources();
-        MapPropertySource overridingPropertySource = new MapPropertySource(PROPERTY_SOURCE_NAME, overridingProperties);
-        propertySources.addFirst(overridingPropertySource);
-
         ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(webApplicationContext, false, environment);
         AnnotationTypeFilter controllerFilter = new AnnotationTypeFilter(Controller.class);
         AnnotationTypeFilter controllerAdviceFilter = new AnnotationTypeFilter(ControllerAdvice.class);

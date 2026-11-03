@@ -2,33 +2,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <!-- Deliberately not a child of stock-parent: this library is meant to move to a repository of its own, so it
-       inherits nothing from Stockback and Stockback's CI version stamp does not reach it. -->
   <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>4.1.2</version>
-    <relativePath/>
+    <groupId>io.github.valuya</groupId>
+    <artifactId>springdoc-openapi-static-parent</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
   </parent>
-  <groupId>io.github.valuya</groupId>
   <artifactId>springdoc-openapi-static</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <name>springdoc-openapi-static</name>
   <description>Generates a springdoc OpenAPI specification at build time, from the controllers alone: no database,
     no server, no services</description>
 
-  <properties>
-    <java.version>17</java.version>
-    <maven.compiler.release>17</maven.compiler.release>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <springdoc.version>3.1.1</springdoc.version>
-  </properties>
-
   <dependencies>
-    <!-- The application's own springdoc and Spring Boot are the ones the specification must come from -->
+    <!-- All provided: the specification must come from the application's own springdoc, Spring Boot and Spring.
+         spring-test (MockServletContext, MockMvc) is one of them, at the version of the application's Spring: the
+         Maven plugin resolves it to match, a test classpath already has it. -->
     <dependency>
       <groupId>org.springdoc</groupId>
       <artifactId>springdoc-openapi-starter-webmvc-api</artifactId>
-      <version>${springdoc.version}</version>
       <scope>provided</scope>
     </dependency>
     <dependency>
@@ -36,10 +26,10 @@
       <artifactId>spring-boot-starter-webmvc</artifactId>
       <scope>provided</scope>
     </dependency>
-    <!-- MockServletContext and MockMvc: the web context runs without a servlet container -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
+      <scope>provided</scope>
     </dependency>
     <dependency>
       <groupId>org.jspecify</groupId>
